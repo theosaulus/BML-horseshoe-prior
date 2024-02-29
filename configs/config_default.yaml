@@ -2,7 +2,7 @@
 n_datasets : 10
 
 # Logging
-do_wandb : False
+do_wandb : True
 wandb_config:
   project : wandb_project_example
   entity : wandb_entity_example
@@ -15,7 +15,7 @@ do_tqdm : True
 defaults:
   - _self_
   - task : reg
-  - solver : random
+  - regressor : random
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled 
 

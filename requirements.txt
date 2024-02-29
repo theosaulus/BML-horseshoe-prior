@@ -18,3 +18,4 @@ tqdm
 
 # Common libraries
 numpy
+scikit-learn

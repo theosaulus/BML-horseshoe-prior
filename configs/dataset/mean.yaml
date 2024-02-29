@@ -1,2 +1,21 @@
 name: Mean Dataset
-config: {}
+config:
+  # The dimension of each data point (p), which is also the dimension of the beta vector
+  dim : 50
+
+  # The non-null coefficients of the beta vector. All the next coefficients will be 0 (0-padding)
+  # If null, the nullification will be done for each coefficient with probability (1 - non_zero_proportion)
+  non_zero_first_coefficients : [2, 2, 2, 2, 2, 2, 2, 2, 5, 20]
+
+  # The proportion of non-zero elements in the beta vector (only apply if nonzero_first_coefficients is null)
+  # If null, the beta vector will be picked randomly from a uniform distribution in [non_zero_proportion_min, non_zero_proportion_max]
+  non_zero_proportion : null
+  non_zero_proportion_min : 0.1
+  non_zero_proportion_max : 0.3
+
+  # The scale and degree of freedom of the Student-t law for the non-null coefficients
+  non_zero_student_t_scale : 3.0
+  non_zero_student_t_degree_freedom : 3.0
+
+  # The standard deviation of the noise
+  sigma : 1.0
