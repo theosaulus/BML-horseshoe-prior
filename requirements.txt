@@ -1,0 +1,20 @@
+# Monitoring
+snakeviz
+
+# Config system
+hydra-core
+
+# Code quality
+black
+
+# Logging
+wandb
+tensorboardX
+tensorboard
+
+# Utils
+matplotlib 
+tqdm
+
+# Common libraries
+numpy
