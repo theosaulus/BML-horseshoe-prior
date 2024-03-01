@@ -1,0 +1,5 @@
+name: Horseshoe Prior
+config: 
+  use_numpyro: false,
+  use_vi: true,
+  chains: 4,
