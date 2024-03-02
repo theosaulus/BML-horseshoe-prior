@@ -16,6 +16,7 @@ do_wandb : False
 wandb_config:
   project : Bayesian Sparse Regression
 do_tb : True
+do_plot : True
 do_cli : True
 do_tqdm : True
 

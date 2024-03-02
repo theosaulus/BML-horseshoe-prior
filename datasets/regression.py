@@ -10,7 +10,7 @@ class RegressionDataset(BaseDataset):
         # Parameters of the dataset
         n = config["n_data_points"]
         p = config["dim"]
-        sigma = config["sigma"]
+        self.sigma = config["sigma"]
         feature_correlation = config["feature_correlation"]
         data_point_correlation_factor = config["data_point_correlation_factor"]
 
@@ -50,7 +50,7 @@ class RegressionDataset(BaseDataset):
         # Generate the observed labels
         self.Y_observed = np.random.normal(
             loc=self.X_matrix @ self.beta,
-            scale=sigma,
+            scale=self.sigma,
         )
 
     def get_x_data(self):

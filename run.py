@@ -1,6 +1,7 @@
 # Logging
 from collections import defaultdict
 import os
+from matplotlib import pyplot as plt
 import wandb
 from tensorboardX import SummaryWriter
 
@@ -38,9 +39,10 @@ def main(config: DictConfig):
     n_datasets: int = config["n_datasets"]
     val_proportion: float = try_get(config, "val_proportion", 0)
     do_val: bool = config["do_val"] and val_proportion > 0
-    do_cli: bool = config["do_cli"]
     do_wandb: bool = config["do_wandb"]
     do_tb: bool = config["do_tb"]
+    do_plot = config["do_plot"]
+    do_cli: bool = config["do_cli"]
     do_tqdm: bool = config["do_tqdm"]
 
     # Set the seeds
@@ -61,7 +63,7 @@ def main(config: DictConfig):
     # Initialize loggers
     run_name = f"[{predictor_name}]_[{dataset_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(seed)}"
     print(f"\nStarting run {run_name}")
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs(f"logs/{run_name}", exist_ok=True)
     if do_wandb:
         run = wandb.init(
             name=run_name,
@@ -89,12 +91,12 @@ def main(config: DictConfig):
                 assert (
                     n_val > 0
                 ), "The proportion of validation data should be greater than 0."
-                x_val, x_data_train = x_data[:n_val], x_data[n_val:]
-                y_val, y_data_train = y_data[:n_val], y_data[n_val:]
+                x_val, x_train = x_data[:n_val], x_data[n_val:]
+                y_val, y_train = y_data[:n_val], y_data[n_val:]
 
         # Get the regressor result, and measure the time.
         with RuntimeMeter("regressor") as rm:
-            beta_hat = regressor.find_coefficients(x_data_train, y_data_train)
+            beta_hat = regressor.find_coefficients(x_train, y_train)
 
         # Compute metrics
         metric_result = {}
@@ -107,21 +109,21 @@ def main(config: DictConfig):
             metric_result["estimation/l_inf_error"] = np.max(np.abs(beta - beta_hat))
 
             # Compute train prediction metrics (i.e. for the task of predicting y)
-            y_pred_train = x_data_train @ beta_hat
+            y_pred_train = x_train @ beta_hat
             metric_result["prediction/l2_error_train"] = np.mean(
-                (y_data_train - y_pred_train) ** 2
+                (y_train - y_pred_train) ** 2
             )
             metric_result["prediction/l1_error_train"] = np.mean(
-                np.abs(y_data_train - y_pred_train)
+                np.abs(y_train - y_pred_train)
             )
             metric_result["prediction/l_inf_error_train"] = np.max(
-                np.abs(y_data_train - y_pred_train)
+                np.abs(y_train - y_pred_train)
             )
             # Compute sigma2 normalized metrics
             if hasattr(dataset, "sigma"):
-                residuals_averager = np.ones(y_data_train.shape) * dataset.sigma
+                residuals_averager = np.ones(y_train.shape) * dataset.sigma
             else:
-                residuals_averager = np.mean(y_data_train) - y_pred_train
+                residuals_averager = np.mean(y_train) - y_pred_train
             metric_result["prediction_normalized/l2_error_train"] = metric_result[
                 "prediction/l2_error_train"
             ] / np.mean(residuals_averager**2)
@@ -132,8 +134,8 @@ def main(config: DictConfig):
                 "prediction/l_inf_error_train"
             ] / np.max(np.abs(residuals_averager))
 
-            # Compute val prediction metrics
             if do_val:
+                # Compute val prediction metrics
                 y_pred_val = x_val @ beta_hat
                 metric_result["prediction/l2_error_val"] = np.mean(
                     (y_val - y_pred_val) ** 2
@@ -158,6 +160,24 @@ def main(config: DictConfig):
                 metric_result["prediction_normalized/l_inf_error_val"] = metric_result[
                     "prediction/l_inf_error_val"
                 ] / np.max(np.abs(residuals_averager))
+                # Plot y_pred = f(y) for the first dataset
+                if do_plot and idx_dataset == 0:
+                    if hasattr(dataset, "sigma"):
+                        plt.scatter(y_train / dataset.sigma, y_pred_train / dataset.sigma, label="y_pred_train / sigma")
+                        if do_val:
+                            plt.scatter(y_val / dataset.sigma, y_pred_val / dataset.sigma, label="y_pred_val / sigma")
+                        plt.xlabel("y (unit of sigma)")
+                        plt.ylabel("y_pred (unit of sigma)")
+                    else:
+                        plt.scatter(y_train, y_pred_train, label="y_pred_train")
+                        if do_val:
+                            plt.scatter(y_val, y_pred_val, label="y_pred_val")
+                        plt.xlabel("y")
+                        plt.ylabel("y_pred")
+                    plt.plot([np.min(y_data), np.max(y_data)], [np.min(y_data), np.max(y_data)], label="Flat", color="black")
+                    plt.title(f"Signal detection with {predictor_name} \non dataset '{dataset_name}'")
+                    plt.legend()
+                    plt.savefig(f"logs/{run_name}/Signal detection.png")
 
             # Average those metrics over the number of datasets
             for metric_name in metric_result:
@@ -179,9 +199,9 @@ def main(config: DictConfig):
             metric_result_all["runtime/total_runtime"] = rm.get_total_runtime()
             metric_result_all["other/idx_dataset"] = idx_dataset
             metric_result_all["other/X_matrix_total_variance"] = (
-                dataset.compute_total_variance(x_data_train)
+                dataset.compute_total_variance(x_train)
             )
-            
+
         # Log the metrics
         with RuntimeMeter("log") as rm:
             if do_wandb:

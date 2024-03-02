@@ -1,10 +1,10 @@
 name: Regression Dataset
 config: 
   # The number of data points (n)
-  n_data_points : 5000
+  n_data_points : 24
 
   # The dimension of each data point (p), which is also the dimension of the beta vector
-  dim : 10
+  dim : 20
 
   # The correlation between different features, between 0 and 1
   feature_correlation : 0.2
