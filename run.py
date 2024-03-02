@@ -18,10 +18,11 @@ import cProfile
 # ML libraries
 import random
 import numpy as np
+from src.data_engineering import shuffle_data
 
 # Project imports
 from src.time_measure import RuntimeMeter
-from src.utils import try_get_seed
+from src.utils import try_get, try_get_seed
 from datasets import dataset_name_to_DatasetClass
 from regressors import regressor_name_to_RegressorClass
 
@@ -35,6 +36,8 @@ def main(config: DictConfig):
     predictor_name: str = config["regressor"]["name"]
     dataset_name: str = config["dataset"]["name"]
     n_datasets: int = config["n_datasets"]
+    val_proportion: float = try_get(config, "val_proportion", 0)
+    do_val: bool = config["do_val"] and val_proportion > 0
     do_cli: bool = config["do_cli"]
     do_wandb: bool = config["do_wandb"]
     do_tb: bool = config["do_tb"]
@@ -74,13 +77,24 @@ def main(config: DictConfig):
 
         # Load data
         with RuntimeMeter("dataset") as rm:
+            # Create the dataset and get the data
             dataset = DatasetClass(config["dataset"]["config"])
             x_data = dataset.get_x_data()  # (n, p)
             y_data = dataset.get_labels()  # (n,)
+            # Shuffle the data
+            x_data, y_data = shuffle_data(x_data, y_data)
+            # Split the data into train and val
+            if do_val:
+                n_val = int(val_proportion * x_data.shape[0])
+                assert (
+                    n_val > 0
+                ), "The proportion of validation data should be greater than 0."
+                x_val, x_data_train = x_data[:n_val], x_data[n_val:]
+                y_val, y_data_train = y_data[:n_val], y_data[n_val:]
 
         # Get the regressor result, and measure the time.
         with RuntimeMeter("regressor") as rm:
-            beta_hat = regressor.find_coefficients(x_data, y_data)
+            beta_hat = regressor.find_coefficients(x_data_train, y_data_train)
 
         # Compute metrics
         metric_result = {}
@@ -92,30 +106,58 @@ def main(config: DictConfig):
             metric_result["estimation/l1_error"] = np.mean(np.abs(beta - beta_hat))
             metric_result["estimation/l_inf_error"] = np.max(np.abs(beta - beta_hat))
 
-            # Compute prediction metrics (i.e. for the task of predicting y)
-            y_hat = x_data @ beta_hat
-            metric_result["prediction/l2_error"] = np.mean((y_data - y_hat) ** 2)
-            metric_result["prediction/l1_error"] = np.mean(np.abs(y_data - y_hat))
-            metric_result["prediction/l_inf_error"] = np.max(np.abs(y_data - y_hat))
-            # Eventually compute sigma2 normalized metrics
+            # Compute train prediction metrics (i.e. for the task of predicting y)
+            y_pred_train = x_data_train @ beta_hat
+            metric_result["prediction/l2_error_train"] = np.mean(
+                (y_data_train - y_pred_train) ** 2
+            )
+            metric_result["prediction/l1_error_train"] = np.mean(
+                np.abs(y_data_train - y_pred_train)
+            )
+            metric_result["prediction/l_inf_error_train"] = np.max(
+                np.abs(y_data_train - y_pred_train)
+            )
+            # Compute sigma2 normalized metrics
             if hasattr(dataset, "sigma"):
-                residuals_averager = np.ones(y_data.shape) * dataset.sigma
+                residuals_averager = np.ones(y_data_train.shape) * dataset.sigma
             else:
-                residuals_averager = np.mean(y_data) - y_hat
-            metric_result["prediction/l2_error_normalized"] = metric_result[
-                "estimation/l2_error"
+                residuals_averager = np.mean(y_data_train) - y_pred_train
+            metric_result["prediction_normalized/l2_error_train"] = metric_result[
+                "prediction/l2_error_train"
             ] / np.mean(residuals_averager**2)
-            metric_result["prediction/l1_error_normalized"] = metric_result[
-                "estimation/l1_error"
+            metric_result["prediction_normalized/l1_error_train"] = metric_result[
+                "prediction/l1_error_train"
             ] / np.mean(np.abs(residuals_averager))
-            metric_result["prediction/l_inf_error_normalized"] = metric_result[
-                "estimation/l_inf_error"
+            metric_result["prediction_normalized/l_inf_error_train"] = metric_result[
+                "prediction/l_inf_error_train"
             ] / np.max(np.abs(residuals_averager))
 
-            # Compute the X matrix total variance
-            metric_result["X_matrix_total_variance"] = dataset.compute_total_variance(
-                x_data
-            )
+            # Compute val prediction metrics
+            if do_val:
+                y_pred_val = x_val @ beta_hat
+                metric_result["prediction/l2_error_val"] = np.mean(
+                    (y_val - y_pred_val) ** 2
+                )
+                metric_result["prediction/l1_error_val"] = np.mean(
+                    np.abs(y_val - y_pred_val)
+                )
+                metric_result["prediction/l_inf_error_val"] = np.max(
+                    np.abs(y_val - y_pred_val)
+                )
+                # Compute sigma2 normalized metrics
+                if hasattr(dataset, "sigma"):
+                    residuals_averager = np.ones(y_val.shape) * dataset.sigma
+                else:
+                    residuals_averager = np.mean(y_val) - y_pred_val
+                metric_result["prediction_normalized/l2_error_val"] = metric_result[
+                    "prediction/l2_error_val"
+                ] / np.mean(residuals_averager**2)
+                metric_result["prediction_normalized/l1_error_val"] = metric_result[
+                    "prediction/l1_error_val"
+                ] / np.mean(np.abs(residuals_averager))
+                metric_result["prediction_normalized/l_inf_error_val"] = metric_result[
+                    "prediction/l_inf_error_val"
+                ] / np.max(np.abs(residuals_averager))
 
             # Average those metrics over the number of datasets
             for metric_name in metric_result:
@@ -127,7 +169,7 @@ def main(config: DictConfig):
             # Merge the averaged metrics with the current metrics
             metric_result_all = {**metric_result, **metric_result_averaged}
 
-            # Add runtime metrics and misc metrics
+            # Add runtime metrics and other metrics
             metric_result_all.update(
                 {
                     f"runtime/runtime_{stage_name}": stage_runtime
@@ -135,8 +177,11 @@ def main(config: DictConfig):
                 }
             )
             metric_result_all["runtime/total_runtime"] = rm.get_total_runtime()
-            metric_result_all["idx_dataset"] = idx_dataset
-
+            metric_result_all["other/idx_dataset"] = idx_dataset
+            metric_result_all["other/X_matrix_total_variance"] = (
+                dataset.compute_total_variance(x_data_train)
+            )
+            
         # Log the metrics
         with RuntimeMeter("log") as rm:
             if do_wandb:
@@ -150,7 +195,7 @@ def main(config: DictConfig):
                     )
             if do_cli:
                 print(
-                    f"Metric results at iteration {idx_dataset} : {metric_result_all}"
+                    f"\nMetric results at iteration {idx_dataset} : {metric_result_all}"
                 )
 
     # Finish the WandB run.
