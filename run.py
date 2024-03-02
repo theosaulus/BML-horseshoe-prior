@@ -112,6 +112,11 @@ def main(config: DictConfig):
                 "estimation/l_inf_error"
             ] / np.max(np.abs(residuals_averager))
 
+            # Compute the X matrix total variance
+            metric_result["X_matrix_total_variance"] = dataset.compute_total_variance(
+                x_data
+            )
+
             # Average those metrics over the number of datasets
             for metric_name in metric_result:
                 metric_result_averaged[f"{metric_name}_averaged"] = (
