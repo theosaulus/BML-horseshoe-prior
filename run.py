@@ -19,13 +19,14 @@ import cProfile
 # ML libraries
 import random
 import numpy as np
-from src.data_engineering import shuffle_data
+from sklearn.metrics import recall_score, precision_score, accuracy_score
 
 # Project imports
 from src.time_measure import RuntimeMeter
 from src.utils import try_get, try_get_seed
 from datasets import dataset_name_to_DatasetClass
 from regressors import regressor_name_to_RegressorClass
+from src.data_engineering import shuffle_data
 
 
 @hydra.main(config_path="configs", config_name="config_default.yaml")
@@ -160,24 +161,19 @@ def main(config: DictConfig):
                 metric_result["prediction_normalized/l_inf_error_val"] = metric_result[
                     "prediction/l_inf_error_val"
                 ] / np.max(np.abs(residuals_averager))
-                # Plot y_pred = f(y) for the first dataset
-                if do_plot and idx_dataset == 0:
-                    if hasattr(dataset, "sigma"):
-                        plt.scatter(y_train / dataset.sigma, y_pred_train / dataset.sigma, label="y_pred_train / sigma")
-                        if do_val:
-                            plt.scatter(y_val / dataset.sigma, y_pred_val / dataset.sigma, label="y_pred_val / sigma")
-                        plt.xlabel("y (unit of sigma)")
-                        plt.ylabel("y_pred (unit of sigma)")
-                    else:
-                        plt.scatter(y_train, y_pred_train, label="y_pred_train")
-                        if do_val:
-                            plt.scatter(y_val, y_pred_val, label="y_pred_val")
-                        plt.xlabel("y")
-                        plt.ylabel("y_pred")
-                    plt.plot([np.min(y_data), np.max(y_data)], [np.min(y_data), np.max(y_data)], label="Flat", color="black")
-                    plt.title(f"Signal detection with {predictor_name} \non dataset '{dataset_name}'")
-                    plt.legend()
-                    plt.savefig(f"logs/{run_name}/Signal detection.png")
+
+            # Compute sparsity metrics
+            beta_is_null = beta == 0
+            beta_hat_is_null = beta_hat == 0
+            metric_result["sparsity/accuracy"] = accuracy_score(
+                beta_is_null, beta_hat_is_null
+            )
+            metric_result["sparsity/precision"] = precision_score(
+                beta_is_null, beta_hat_is_null
+            )
+            metric_result["sparsity/recall"] = recall_score(
+                beta_is_null, beta_hat_is_null
+            )
 
             # Average those metrics over the number of datasets
             for metric_name in metric_result:
@@ -201,6 +197,40 @@ def main(config: DictConfig):
             metric_result_all["other/X_matrix_total_variance"] = (
                 dataset.compute_total_variance(x_train)
             )
+
+            # Plot y_pred = f(y) for the first dataset
+            if do_plot and idx_dataset == 0:
+                if hasattr(dataset, "sigma"):
+                    plt.scatter(
+                        y_train / dataset.sigma,
+                        y_pred_train / dataset.sigma,
+                        label="y_pred_train / sigma",
+                    )
+                    if do_val:
+                        plt.scatter(
+                            y_val / dataset.sigma,
+                            y_pred_val / dataset.sigma,
+                            label="y_pred_val / sigma",
+                        )
+                    plt.xlabel("y (unit of sigma)")
+                    plt.ylabel("y_pred (unit of sigma)")
+                else:
+                    plt.scatter(y_train, y_pred_train, label="y_pred_train")
+                    if do_val:
+                        plt.scatter(y_val, y_pred_val, label="y_pred_val")
+                    plt.xlabel("y")
+                    plt.ylabel("y_pred")
+                plt.plot(
+                    [np.min(y_data), np.max(y_data)],
+                    [np.min(y_data), np.max(y_data)],
+                    label="Flat",
+                    color="black",
+                )
+                plt.title(
+                    f"Signal detection with {predictor_name} \non dataset '{dataset_name}'"
+                )
+                plt.legend()
+                plt.savefig(f"logs/{run_name}/Signal detection.png")
 
         # Log the metrics
         with RuntimeMeter("log") as rm:
