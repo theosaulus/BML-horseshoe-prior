@@ -14,7 +14,7 @@ config:
 
   # The non-null coefficients of the beta vector. All the next coefficients will be 0 (0-padding)
   # If null, the nullification will be done for each coefficient with probability (1 - non_zero_proportion)
-  non_zero_first_coefficients : #[2, 2, 2, 2, 2, 2, 2, 2, 5, 20]
+  non_zero_first_coefficients : [2, 2, 2, 2, 2, 2, 2, 2, 5, 20]
 
   # The proportion of non-zero elements in the beta vector (only apply if nonzero_first_coefficients is null)
   # If null, the beta vector will be picked randomly from a uniform distribution in [non_zero_proportion_min, non_zero_proportion_max]
