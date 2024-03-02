@@ -15,7 +15,6 @@ class HorseshoePM(BaseBayesianRegressor):
         self.use_numpyro = config.get("use_numpyro", False)
         self.use_vi = config.get("use_vi", False)
         self.chains = config.get("chains", 4)
-        breakpoint()
         self.seed = config.get("seed", 42)
         self.rng = np.random.default_rng(self.seed)
         
