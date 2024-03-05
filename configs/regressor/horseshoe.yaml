@@ -1,0 +1,6 @@
+name: Bayesian Linear Model Prior
+config: 
+  use_numpyro: false,
+  use_vi: false,
+  prior: horseshoe,
+  chains: 4,

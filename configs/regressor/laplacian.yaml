@@ -1,5 +1,6 @@
-name: Horseshoe Prior
+name: Bayesian Linear Model Prior
 config: 
   use_numpyro: false,
   use_vi: false,
+  prior: laplacian,
   chains: 4,
