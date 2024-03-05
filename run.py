@@ -6,7 +6,7 @@ from tensorboardX import SummaryWriter
 
 # Config system
 import hydra
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import OmegaConf, DictConfig, open_dict
 
 # Utils
 from tqdm import tqdm
@@ -44,6 +44,8 @@ def main(config: DictConfig):
     seed = try_get_seed(config)
     random.seed(seed)
     np.random.seed(seed)
+    with open_dict(config):
+        config.regressor.config.seed = seed
     print(f"Using seed: {seed}")
 
     # Get the regressor
