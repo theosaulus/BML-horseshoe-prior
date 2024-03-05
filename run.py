@@ -64,7 +64,11 @@ def main(config: DictConfig):
     DatasetClass = dataset_name_to_DatasetClass[dataset_name]
 
     # Initialize loggers
-    run_name = f"[{predictor_name}]_[{dataset_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(seed)}"
+    if RegressorClass == regressor_name_to_RegressorClass["Bayesian Linear Model Prior"]:
+        wandb_dataset_name = f"{dataset_name}_{config['regressor']['config']['prior']}"
+    else:
+        wandb_dataset_name = dataset_name
+    run_name = f"[{predictor_name}]_[{wandb_dataset_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(seed)}"
     print(f"\nStarting run {run_name}")
     os.makedirs(f"logs/{run_name}", exist_ok=True)
     if do_wandb:
