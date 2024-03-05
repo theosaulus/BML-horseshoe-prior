@@ -16,6 +16,7 @@ tensorboard
 matplotlib 
 tqdm
 
-# Common libraries
+# ML libraries
 numpy
 scikit-learn
+pymc

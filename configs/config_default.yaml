@@ -1,20 +1,31 @@
-# Hyperparameters
+# =============== Hyperparameters ===============
+
+# Number of datasets to generate. Results will be aggregated over these datasets.
 n_datasets : 10
 
-# Logging
-do_wandb : True
+# The proportion of the data points to use for validation prediction.
+val_proportion : 0.2
+
+# Whether to do validation prediction
+do_val : True
+
+
+
+# =============== Logging ===============
+do_wandb : False
 wandb_config:
-  project : wandb_project_example
-  entity : wandb_entity_example
+  project : Bayesian Sparse Regression
 do_tb : True
+do_plot : True
 do_cli : True
 do_tqdm : True
 
 
-# Defaults sub-configs and other Hydra config.
+
+# =============== Dataset and regressor method, and Hydra parameters ===============
 defaults:
   - _self_
-  - task : reg
+  - dataset : mean
   - regressor : random
   - override hydra/hydra_logging: disabled  
   - override hydra/job_logging: disabled 
