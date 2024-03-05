@@ -14,9 +14,11 @@ tensorboard
 
 # Utils
 matplotlib 
+seaborn
 tqdm
 
 # ML libraries
 numpy
 scikit-learn
 pymc
+numpyro
