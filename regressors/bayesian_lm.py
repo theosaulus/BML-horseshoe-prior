@@ -20,8 +20,8 @@ class BayesianLinearPM(BaseBayesianRegressor):
         self.use_vi = config.get("use_vi", False)
         self.chains = config.get("chains", 4)
         self.seed = config.get("seed", 42)
-        self.prior = config.get("prior", "horseshoe")
-        assert self.prior in ["horseshoe", "laplacian", "student"], "Invalid prior. Choose from 'horseshoe', 'laplacian' or 'student'."
+        self.prior_name = config.get("prior", "horseshoe")
+        assert self.prior_name in ["horseshoe", "laplacian", "student"], "Invalid prior. Choose from 'horseshoe', 'laplacian' or 'student'."
         self.rng = np.random.default_rng(self.seed)
         
     def find_coefficients(self, x_data: np.ndarray, y_data: np.ndarray) -> np.ndarray:
@@ -35,12 +35,12 @@ class BayesianLinearPM(BaseBayesianRegressor):
 
             tau = pm.HalfCauchy('tau', beta=1)
 
-            if self.prior == "horseshoe":
+            if self.prior_name == "horseshoe":
                 lambda_ = pm.HalfCauchy('lambda_', beta=1, shape=(p, 1))
-            elif self.prior == "laplacian":
+            elif self.prior_name == "laplacian":
                 lambda_sq = pm.Exponential('lambda_sq', lam=2, shape=(p, 1))
                 lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
-            elif self.prior == "student":
+            elif self.prior_name == "student":
                 lambda_sq = pm.InverseGamma('lambda_sq', alpha=1, beta=2, shape=(p, 1))
                 lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
 

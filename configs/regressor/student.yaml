@@ -1,6 +1,6 @@
 name: Bayesian Linear Model Prior
 config: 
-  use_numpyro: false,
-  use_vi: false,
-  prior: student,
-  chains: 4,
+  use_numpyro: false
+  use_vi: false
+  prior: student
+  chains: 4
