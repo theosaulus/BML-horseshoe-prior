@@ -31,7 +31,7 @@ class BayesianLinearSpikeSlabPM(BaseBayesianRegressor):
         p = self.p
 
         with spike_slab:
-            # sigma = pm.HalfNormal("sigma", 1)
+            sigma = pm.HalfNormal("sigma", 1)
 
             c = 5 # TODO, allow to have a prior for c
             epsilon = 0.1
@@ -48,9 +48,9 @@ class BayesianLinearSpikeSlabPM(BaseBayesianRegressor):
                 z_2 = pm.Normal('z_2', mu=0, sigma=c, shape=(p, 1))
                 beta = pm.Deterministic('beta', lambda_*z_1 + (1-lambda_)*z_2)
 
-            # mu = pm.math.dot(x_data, beta)
+            mu = pm.math.dot(x_data, beta)
 
-            # y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
+            y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
 
             self.prior = pm.sample_prior_predictive(samples=1000)
             if self.use_vi:
