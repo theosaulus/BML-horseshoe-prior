@@ -6,7 +6,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from regressors.base_regressor import BaseBayesianRegressor
 
-class BayesianLinearPM(BaseBayesianRegressor):
+class BayesianLinearSpikeSlabPM(BaseBayesianRegressor):
     """ A regressor that uses the PyMC library to perform Bayesian linear regression with different priors.
     The priors available are the horseshoe, laplacian and student-t.
     It is possible to use the Numpyro sampler by setting the `use_numpyro` parameter to True (requires Jax to be installed).
@@ -20,43 +20,37 @@ class BayesianLinearPM(BaseBayesianRegressor):
         self.use_vi = config.get("use_vi", False)
         self.chains = config.get("chains", 4)
         self.seed = config.get("seed", 42)
-        self.prior_name = config.get("prior", "horseshoe")
-        assert self.prior_name in ["horseshoe", "reg-horseshoe", "laplacian", "student", "spike-slab"], "Invalid prior. Choose from 'horseshoe', 'reg-horseshoe', 'laplacian', 'student', or 'spike-slab."
+        # self.prior_name = config.get("prior", "horseshoe")
+        # assert self.prior_name in ["horseshoe", "reg-horseshoe", "laplacian", "student", "spike-slab"], "Invalid prior. Choose from 'horseshoe', 'reg-horseshoe', 'laplacian', 'student', or 'spike-slab."
         self.rng = np.random.default_rng(self.seed)
         
     def find_coefficients(self, x_data: np.ndarray, y_data: np.ndarray) -> np.ndarray:
-        horseshoe = pm.Model()
+        spike_slab = pm.Model()
 
         self.p = x_data.shape[1]
         p = self.p
 
-        with horseshoe:
-            sigma = pm.HalfNormal("sigma", 1)
+        with spike_slab:
+            # sigma = pm.HalfNormal("sigma", 1)
 
-            tau = pm.HalfCauchy('tau', beta=1)
+            c = 5 # TODO, allow to have a prior for c
+            epsilon = 0.1
 
-            if self.prior_name == "horseshoe":
-                lambda_ = pm.HalfCauchy('lambda_', beta=1, shape=(p, 1))
-            elif self.prior_name == "laplacian":
-                lambda_sq = pm.Exponential('lambda_sq', lam=2, shape=(p, 1))
-                lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
-            elif self.prior_name == "student":
-                lambda_sq = pm.InverseGamma('lambda_sq', alpha=1, beta=2, shape=(p, 1))
-                lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
-            elif self.prior_name == "reg-horseshoe":
-                lambda_1 = pm.HalfCauchy('lambda_1', beta=1, shape=(p, 1))
-                c_sq = pm.InverseGamma('c_sq', alpha=1, beta=2, shape=(p, 1))
-                lambda_tilde_sq = pm.Deterministic('lambda_tilde_sq', (c_sq * lambda_1**2) / (c_sq + (tau**2 * lambda_1**2)))
-                lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_tilde_sq))
+            lambda_ = pm.Bernoulli('lambda_', p=0.5, shape=(p, 1))
 
             kappa = pm.Deterministic('kappa', 1/(1+lambda_**2))
 
-            z = pm.Normal('z', mu=0, sigma=1, shape=(p, 1))
-            beta = pm.Deterministic('beta', z*tau*lambda_)
+            if epsilon == 0:
+                z = pm.Normal('z', mu=0, sigma=c, shape=(p, 1))
+                beta = pm.Deterministic('beta', z*lambda_)
+            else:
+                z_1 = pm.Normal('z_1', mu=0, sigma=epsilon, shape=(p, 1))
+                z_2 = pm.Normal('z_2', mu=0, sigma=c, shape=(p, 1))
+                beta = pm.Deterministic('beta', lambda_*z_1 + (1-lambda_)*z_2)
 
-            mu = pm.math.dot(x_data, beta)
+            # mu = pm.math.dot(x_data, beta)
 
-            y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
+            # y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
 
             self.prior = pm.sample_prior_predictive(samples=1000)
             if self.use_vi:
@@ -76,26 +70,13 @@ class BayesianLinearPM(BaseBayesianRegressor):
         return beta_hat.values
     
     def plot_posterior(self, true_post=None, var_name="beta", ax=None, title=r"$\beta$ Posterior", x_label=r"$\beta$"):
-        """ 
-        Plot the posterior distribution of the coefficients.
-        true_post: array, optional
-            The true coefficients to be plotted and compared to the posterior.
-        var_name: str, optional
-            The name of the variable to be plotted.
-        ax: matplotlib axis, optional
-            The axis to plot the posterior.
-        title: str, optional
-            The title of the plot.
-        x_label: str, optional
-            The label of the x-axis.
-        """
         ax, = az.plot_forest(self.trace, var_names=[var_name], coords={"beta_dim_0": range(len(self.trace.posterior.beta_dim_0))},
             kind='ridgeplot', ridgeplot_truncate=False, ridgeplot_alpha=0.5,
             hdi_prob=0.95, combined=True, ax=ax,
             figsize=(8, 6))
 
         ax.set_title(title)
-        ax.set_xlabel(x_label)
+        ax.set_xlabel(r"$\beta$")
 
         if true_post is not None:
             ax.scatter(true_post[::-1], ax.get_yticks(), color='r', marker='x', s=100, label='True beta')
@@ -103,21 +84,6 @@ class BayesianLinearPM(BaseBayesianRegressor):
         return ax
     
     def plot_prior(self, var_name="beta", ax=None, title=r"$\beta$ Prior", x_label=r"$\beta$", xmin=-10, xmax=10):
-        """
-        Plot the prior distribution of the coefficients.
-        var_name: str, optional
-            The name of the variable to be plotted.
-        ax: matplotlib axis, optional
-            The axis to plot the prior.
-        title: str, optional
-            The title of the plot.
-        x_label: str, optional
-            The label of the x-axis.
-        xmin: float, optional
-            The minimum value of the x-axis.
-        xmax: float, optional
-            The maximum value of the x-axis.
-        """
         if ax is None:
             fig, ax = plt.subplots(1, 1, figsize=(8, 6))
         
