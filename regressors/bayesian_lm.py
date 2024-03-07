@@ -71,13 +71,26 @@ class BayesianLinearPM(BaseBayesianRegressor):
         return beta_hat.values
     
     def plot_posterior(self, true_post=None, var_name="beta", ax=None, title=r"$\beta$ Posterior", x_label=r"$\beta$"):
+        """ 
+        Plot the posterior distribution of the coefficients.
+        true_post: array, optional
+            The true coefficients to be plotted and compared to the posterior.
+        var_name: str, optional
+            The name of the variable to be plotted.
+        ax: matplotlib axis, optional
+            The axis to plot the posterior.
+        title: str, optional
+            The title of the plot.
+        x_label: str, optional
+            The label of the x-axis.
+        """
         ax, = az.plot_forest(self.trace, var_names=[var_name], coords={"beta_dim_0": range(len(self.trace.posterior.beta_dim_0))},
             kind='ridgeplot', ridgeplot_truncate=False, ridgeplot_alpha=0.5,
             hdi_prob=0.95, combined=True, ax=ax,
             figsize=(8, 6))
 
         ax.set_title(title)
-        ax.set_xlabel(r"$\beta$")
+        ax.set_xlabel(x_label)
 
         if true_post is not None:
             ax.scatter(true_post[::-1], ax.get_yticks(), color='r', marker='x', s=100, label='True beta')
@@ -85,6 +98,21 @@ class BayesianLinearPM(BaseBayesianRegressor):
         return ax
     
     def plot_prior(self, var_name="beta", ax=None, title=r"$\beta$ Prior", x_label=r"$\beta$", xmin=-10, xmax=10):
+        """
+        Plot the prior distribution of the coefficients.
+        var_name: str, optional
+            The name of the variable to be plotted.
+        ax: matplotlib axis, optional
+            The axis to plot the prior.
+        title: str, optional
+            The title of the plot.
+        x_label: str, optional
+            The label of the x-axis.
+        xmin: float, optional
+            The minimum value of the x-axis.
+        xmax: float, optional
+            The maximum value of the x-axis.
+        """
         if ax is None:
             fig, ax = plt.subplots(1, 1, figsize=(8, 6))
         
