@@ -206,7 +206,31 @@ def main(config: DictConfig):
 
             # Plot y_pred = f(y) for the first dataset
             if do_plot and idx_dataset == 0:
+                if RegressorClass in [
+                    regressor_name_to_RegressorClass["Bayesian Linear Model Prior"],
+                    regressor_name_to_RegressorClass["Bayesian Linear Model Prior (Spike and Slab)"],
+                ]:
+                    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+                    regressor.plot_prior(var_name="kappa", ax=axes[0], title=r"Prior on $\kappa$", x_label=r"$\kappa$", xmin=0, xmax=2)
+                    regressor.plot_prior(var_name="beta", ax=axes[1])
+                    plt.title(
+                        r"Priors on $\beta$ and $\kappa$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"
+                    )
+                    plt.tight_layout()
+                    plt.savefig(f"logs/{run_name}/Priors.png")
+                    plt.show()
+
+                    fig, axes = plt.subplots(1, 1, figsize=(5, 5*beta.shape[0]//10))
+                    regressor.plot_posterior(true_post=beta, ax=axes)
+                    plt.title(
+                        r"Posterior on $\beta$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"
+                    )
+                    plt.tight_layout()
+                    plt.savefig(f"logs/{run_name}/Posterior.png")
+                    plt.show()
+
                 if hasattr(dataset, "sigma"):
+                    plt.figure(figsize=(8, 5))
                     plt.scatter(
                         y_train / dataset.sigma,
                         y_pred_train / dataset.sigma,
@@ -221,6 +245,7 @@ def main(config: DictConfig):
                     plt.xlabel("y (unit of sigma)")
                     plt.ylabel("y_pred (unit of sigma)")
                 else:
+                    plt.figure(figsize=(8, 5))
                     plt.scatter(y_train, y_pred_train, label="y_pred_train")
                     if do_val:
                         plt.scatter(y_val, y_pred_val, label="y_pred_val")

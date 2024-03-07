@@ -123,12 +123,11 @@ class BayesianLinearPM(BaseBayesianRegressor):
         
         prior_plot = self.prior.prior[var_name].mean(axis=0).values.reshape(-1)
         if xmin is not None:
-            prior_plot = prior_plot[prior_plot > xmin]
+            prior_plot = prior_plot[prior_plot >= xmin]
         if xmax is not None:
-            prior_plot = prior_plot[prior_plot < xmax]
+            prior_plot = prior_plot[prior_plot <= xmax]
 
         ax = sns.kdeplot(prior_plot, levels=30, alpha=0.5, ax=ax)
-        # plt.xlim(-100, 100)
         ax.set_title(title)
         ax.set_xlabel(x_label)
         ax.set_ylabel("Density")
