@@ -38,7 +38,7 @@ class BayesianLinearPM(BaseBayesianRegressor):
             if self.prior_name == "horseshoe":
                 lambda_ = pm.HalfCauchy('lambda_', beta=1, shape=(p, 1))
             elif self.prior_name == "laplacian":
-                lambda_sq = pm.Exponential('lambda_sq', lam=2, shape=(p, 1))
+                lambda_sq = pm.Exponential('lambda_sq', lam=1/2, shape=(p, 1))
                 lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
             elif self.prior_name == "student":
                 lambda_sq = pm.InverseGamma('lambda_sq', alpha=1, beta=2, shape=(p, 1))
