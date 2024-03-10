@@ -211,7 +211,7 @@ def main(config: DictConfig):
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior (Spike and Slab)"],
                 ]:
                     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-                    regressor.plot_prior(var_name="kappa", ax=axes[0], title=r"Prior on $\kappa$", x_label=r"$\kappa$", xmin=0, xmax=2)
+                    regressor.plot_prior(var_name="kappa", ax=axes[0], title=r"Prior on $\kappa$", x_label=r"$\kappa$", xmin=0, xmax=regressor.prior.prior["kappa"].values.max())
                     regressor.plot_prior(var_name="beta", ax=axes[1])
                     plt.title(
                         r"Priors on $\beta$ and $\kappa$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"

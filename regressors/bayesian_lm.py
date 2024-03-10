@@ -32,8 +32,14 @@ class BayesianLinearPM(BaseBayesianRegressor):
 
         with horseshoe:
             sigma = pm.HalfNormal("sigma", 1)
-
-            tau = pm.HalfCauchy('tau', beta=1)
+            
+            if self.config.get("tau_prior", None) == "half-student":
+                p0 = int(self.config.get("x_p0", 1/2) * p)
+                assert p0 <= p, "x_p0 must be smaller than 1."
+                p0 = max(p0, 1)
+                tau = pm.HalfStudentT('tau', 2, p0 / (p-p0) * sigma / np.sqrt(x_data.shape[0]))
+            else:
+                tau = pm.HalfCauchy('tau', beta=1)
 
             if self.prior_name == "horseshoe":
                 lambda_ = pm.HalfCauchy('lambda_', beta=1, shape=(p, 1))

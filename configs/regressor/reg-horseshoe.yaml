@@ -3,4 +3,6 @@ config:
   use_numpyro: true
   use_vi: false
   prior: reg-horseshoe
+  tau_prior: half-student
+  x_p0: 0.2
   chains: 4
