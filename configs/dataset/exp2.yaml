@@ -1,0 +1,29 @@
+name: Regression Dataset
+config: 
+  # The number of data points (n)
+  n_data_points : 24   # 60 120 240 480
+
+  # The dimension of each data point (p), which is also the dimension of the beta vector
+  dim : 20   # 50 100 200 400
+
+  # The correlation between different features, between 0 and 1
+  feature_correlation : 0.2
+
+  # The correlation factor between data points, between 0 and +inf
+  data_point_correlation_factor : 5
+
+  # The non-null coefficients of the beta vector. All the next coefficients will be 0 (0-padding)
+  # If null, the nullification will be done for each coefficient with probability (1 - non_zero_proportion)
+  non_zero_first_coefficients : [2, 2, 2, 2, 2, 2, 2, 2, 5, 20]
+  # non_zero_first_coefficients : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+  non_zero_proportion : null
+  non_zero_proportion_min : null
+  non_zero_proportion_max : null
+
+  # The scale and degree of freedom of the Student-t law for the non-null coefficients
+  non_zero_student_t_scale : null
+  non_zero_student_t_degree_freedom : null
+
+  # The standard deviation of the noise
+  sigma : 1.0
