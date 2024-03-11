@@ -51,6 +51,7 @@ def main(config: DictConfig):
     random.seed(seed)
     np.random.seed(seed)
     with open_dict(config):
+        config.regressor.config.classification = config["dataset"].get("classification", False)
         config.regressor.config.seed = seed
     print(f"Using seed: {seed}")
 
