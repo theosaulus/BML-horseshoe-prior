@@ -51,7 +51,7 @@ def main(config: DictConfig):
     random.seed(seed)
     np.random.seed(seed)
     with open_dict(config):
-        config.regressor.config.classification = config["dataset"].get("classification", False)
+        config.regressor.config.classification = config["dataset"]["config"].get("classification", False)
         config.regressor.config.seed = seed
     print(f"Using seed: {seed}")
 
@@ -207,6 +207,20 @@ def main(config: DictConfig):
 
             # Plot y_pred = f(y) for the first dataset
             if do_plot and idx_dataset == 0:
+                if config["dataset"]["config"]["classification"]:
+                    plt.figure(figsize=(8, 5))
+                    plt.scatter(x_train[y_train == 0][:, 0], x_train[y_train == 0][:, 1], label="Class 1", color="blue")
+                    plt.scatter(x_train[y_train == 1][:, 0], x_train[y_train == 1][:, 1], label="Class 2", color="red")
+                    if do_val:
+                        plt.scatter(x_val[y_val == 0][:, 0], x_val[y_val == 0][:, 1], label="Class 1 val", color="lightblue")
+                        plt.scatter(x_val[y_val == 1][:, 0], x_val[y_val == 1][:, 1], label="Class 2 val", color="lightcoral")
+                    plt.xlabel("x1")
+                    plt.ylabel("x2")
+                    plt.title(f"Relevant features for {predictor_name} \non dataset '{dataset_name}'")
+                    plt.legend()
+                    plt.savefig(f"logs/{run_name}/classification_scatter.png")
+                    plt.show()
+
                 if RegressorClass in [
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior"],
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior (Spike and Slab)"],

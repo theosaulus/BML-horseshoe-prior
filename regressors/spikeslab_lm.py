@@ -45,7 +45,8 @@ class BayesianLinearSpikeSlabPM(BaseBayesianLinearPM):
             mu = pm.math.dot(x_data, beta)
 
             if self.classification:
-                y_obs = pm.Bernoulli('y_obs', logit_p=mu, observed=y_data)
+                likelihood = pm.invlogit(mu)
+                y_obs = pm.Bernoulli('y_obs', p=likelihood, observed=y_data.reshape(-1, 1))
             else:
                 y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
 

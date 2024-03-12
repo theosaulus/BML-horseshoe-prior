@@ -17,66 +17,6 @@ class BaseBayesianLinearPM(BaseBayesianRegressor):
         self.classification = config.get("classification", False)
         self.rng = np.random.default_rng(self.seed)
         
-    def find_coefficients(self, x_data: np.ndarray, y_data: np.ndarray) -> np.ndarray:
-        horseshoe = pm.Model()
-
-        self.p = x_data.shape[1]
-        p = self.p
-
-        with horseshoe:
-            sigma = pm.HalfNormal("sigma", 1)
-            
-            if self.config.get("tau_prior", None) == "half-student":
-                p0 = int(self.config.get("x_p0", 1/2) * p)
-                assert p0 <= p, "x_p0 must be smaller than 1."
-                p0 = max(p0, 1)
-                tau = pm.HalfStudentT('tau', 2, p0 / (p-p0) * sigma / np.sqrt(x_data.shape[0]))
-            else:
-                tau = pm.HalfCauchy('tau', beta=1)
-
-            if self.prior_name == "horseshoe":
-                lambda_ = pm.HalfCauchy('lambda_', beta=1, shape=(p, 1))
-            elif self.prior_name == "laplacian":
-                lambda_sq = pm.Exponential('lambda_sq', lam=1/2, shape=(p, 1))
-                lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
-            elif self.prior_name == "student":
-                lambda_sq = pm.InverseGamma('lambda_sq', alpha=1, beta=2, shape=(p, 1))
-                lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_sq))
-            elif self.prior_name == "reg-horseshoe":
-                lambda_1 = pm.HalfCauchy('lambda_1', beta=1, shape=(p, 1))
-                c_sq = pm.InverseGamma('c_sq', alpha=1, beta=2, shape=(p, 1))
-                lambda_tilde_sq = pm.Deterministic('lambda_tilde_sq', (c_sq * lambda_1**2) / (c_sq + (tau**2 * lambda_1**2)))
-                lambda_ = pm.Deterministic('lambda_', pm.math.sqrt(lambda_tilde_sq))
-
-            kappa = pm.Deterministic('kappa', 1/(1+lambda_**2))
-
-            z = pm.Normal('z', mu=0, sigma=1, shape=(p, 1))
-            beta = pm.Deterministic('beta', z*tau*lambda_)
-
-            mu = pm.math.dot(x_data, beta)
-
-            if self.classification:
-                y_obs = pm.Bernoulli('y_obs', logit_p=mu, observed=y_data)
-            else:
-                y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
-
-            self.prior = pm.sample_prior_predictive(samples=1000)
-            if self.use_vi:
-                approx = pm.fit(10000, method="advi", random_seed=self.seed)
-                trace = approx.sample(1000, random_seed=self.rng)
-            else:
-                if self.use_numpyro:
-                    trace = pm.sample(1000, nuts_sampler="numpyro", target_accept=0.8, random_seed=self.rng)
-                else:
-                    trace = pm.sample(1000, target_accept=0.8, random_seed=self.rng, chains=self.chains)
-        
-        self.trace = trace
-
-        betas_sampled = trace["posterior"]["beta"].mean(axis=0)
-
-        beta_hat = betas_sampled.mean(axis=0)[:, 0]
-        return beta_hat.values
-    
     def plot_posterior(self, true_post=None, var_name="beta", ax=None, title=r"$\beta$ Posterior", x_label=r"$\beta$"):
         """ 
         Plot the posterior distribution of the coefficients.
@@ -188,7 +128,8 @@ class BayesianLinearPM(BaseBayesianLinearPM):
             mu = pm.math.dot(x_data, beta)
 
             if self.classification:
-                y_obs = pm.Bernoulli('y_obs', logit_p=mu, observed=y_data)
+                likelihood = pm.invlogit(mu)
+                y_obs = pm.Bernoulli('y_obs', p=likelihood, observed=y_data.reshape(-1, 1))
             else:
                 y_obs = pm.Normal('y_obs', mu=mu, sigma=sigma, observed=y_data.reshape(-1, 1))
 
