@@ -221,6 +221,15 @@ def main(config: DictConfig):
                     plt.savefig(f"logs/{run_name}/classification_scatter.png")
                     plt.show()
 
+                    fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+                    ax = regressor.plot_posterior_draws(ax=ax)
+                    plt.title(
+                        r"Posterior draws on $\beta$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"
+                    )
+                    plt.tight_layout()
+                    plt.savefig(f"logs/{run_name}/Posterior_draws_classification.png")
+                    plt.show()
+
                 if RegressorClass in [
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior"],
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior (Spike and Slab)"],

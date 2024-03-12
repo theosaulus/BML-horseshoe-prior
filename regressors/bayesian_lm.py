@@ -16,6 +16,37 @@ class BaseBayesianLinearPM(BaseBayesianRegressor):
         self.prior_name = config.get("prior", "horseshoe")
         self.classification = config.get("classification", False)
         self.rng = np.random.default_rng(self.seed)
+    
+    def plot_posterior_draws(self, var_name="beta", ax=None, title=r"$\beta$ Posterior Draws", x_label=r"$\beta$", relevant_features=[0, 1]):
+        """
+        Plot the posterior draws of the coefficients.
+        var_name: str, optional
+            The name of the variable to be plotted.
+        ax: matplotlib axis, optional
+            The axis to plot the posterior draws.
+        title: str, optional
+            The title of the plot.
+        x_label: str, optional
+            The label of the x-axis.
+        relevant_features: list, optional
+            The relevant features to be plotted.
+        """
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+        
+        chain, draw, beta_dim, _ = self.trace.posterior[var_name].shape
+        draws = self.trace.posterior[var_name].values.reshape(chain * draw, beta_dim)
+        draws = draws[:, relevant_features]
+        
+        # Box plot
+        ax = sns.boxplot(data=draws, ax=ax)
+        
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel("Density")
+        ax.legend()
+        
+        return ax
         
     def plot_posterior(self, true_post=None, var_name="beta", ax=None, title=r"$\beta$ Posterior", x_label=r"$\beta$"):
         """ 
