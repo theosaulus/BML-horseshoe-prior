@@ -167,6 +167,10 @@ def main(config: DictConfig):
                 metric_result["prediction_normalized/l_inf_error_val"] = metric_result[
                     "prediction/l_inf_error_val"
                 ] / np.max(np.abs(residuals_averager))
+                if config["dataset"]["config"].get("classification", False):
+                    metric_result["prediction/accuracy_val"] = accuracy_score(y_val, y_pred_val > 0.5)
+                    metric_result["prediction/precision_val"] = precision_score(y_val, y_pred_val > 0.5)
+                    metric_result["prediction/recall_val"] = recall_score(y_val, y_pred_val > 0.5)
 
             # Compute sparsity metrics
             beta_is_null = beta == 0
@@ -210,7 +214,7 @@ def main(config: DictConfig):
                     predictor_title = config["regressor"]["config"]["prior"]
                 except KeyError:
                     predictor_title = predictor_name
-                if config["dataset"]["config"]["classification"]:
+                if config["dataset"]["config"].get("classification", False):
                     plt.figure(figsize=(8, 5))
                     plt.scatter(x_train[y_train == 0][:, 0], x_train[y_train == 0][:, 1], label="Class 1", color="blue")
                     plt.scatter(x_train[y_train == 1][:, 0], x_train[y_train == 1][:, 1], label="Class 2", color="red")
