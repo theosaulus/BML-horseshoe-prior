@@ -28,7 +28,6 @@ from datasets import dataset_name_to_DatasetClass
 from regressors import regressor_name_to_RegressorClass
 from src.data_engineering import shuffle_data
 
-
 @hydra.main(config_path="configs", config_name="config_default.yaml")
 def main(config: DictConfig):
     print("Configuration used :")
@@ -207,6 +206,10 @@ def main(config: DictConfig):
 
             # Plot y_pred = f(y) for the first dataset
             if do_plot and idx_dataset == 0:
+                try:
+                    predictor_title = config["regressor"]["config"]["prior"]
+                except KeyError:
+                    predictor_title = predictor_name
                 if config["dataset"]["config"]["classification"]:
                     plt.figure(figsize=(8, 5))
                     plt.scatter(x_train[y_train == 0][:, 0], x_train[y_train == 0][:, 1], label="Class 1", color="blue")
@@ -216,7 +219,7 @@ def main(config: DictConfig):
                         plt.scatter(x_val[y_val == 1][:, 0], x_val[y_val == 1][:, 1], label="Class 2 val", color="lightcoral")
                     plt.xlabel("x1")
                     plt.ylabel("x2")
-                    plt.title(f"Relevant features for {predictor_name} \non dataset '{dataset_name}'")
+                    plt.title(f"Relevant features for {predictor_title} \non dataset '{dataset_name}'")
                     plt.legend()
                     plt.savefig(f"logs/{run_name}/classification_scatter.png")
                     plt.show()
@@ -224,7 +227,7 @@ def main(config: DictConfig):
                     fig, ax = plt.subplots(1, 1, figsize=(5, 5))
                     ax = regressor.plot_posterior_draws(ax=ax)
                     plt.title(
-                        r"Posterior draws on $\beta$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"
+                        r"Posterior draws on $\beta$" + f"\nfor {predictor_title} prior"
                     )
                     plt.tight_layout()
                     plt.savefig(f"logs/{run_name}/Posterior_draws_classification.png")
@@ -236,9 +239,9 @@ def main(config: DictConfig):
                 ]:
                     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
                     regressor.plot_prior(var_name="kappa", ax=axes[0], title=r"Prior on $\kappa$", x_label=r"$\kappa$", xmin=0, xmax=regressor.prior.prior["kappa"].values.max())
-                    regressor.plot_prior(var_name="beta", ax=axes[1])
-                    plt.title(
-                        r"Priors on $\beta$ and $\kappa$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"
+                    regressor.plot_prior(var_name="beta", ax=axes[1], title=r"Prior on $\beta$")
+                    fig.suptitle(
+                        rf"{predictor_title} prior"
                     )
                     plt.tight_layout()
                     plt.savefig(f"logs/{run_name}/Priors.png")
@@ -247,7 +250,7 @@ def main(config: DictConfig):
                     fig, axes = plt.subplots(1, 1, figsize=(5, 5*beta.shape[0]//10))
                     regressor.plot_posterior(true_post=beta, ax=axes)
                     plt.title(
-                        r"Posterior on $\beta$" + f"\nfor {predictor_name} \non dataset '{dataset_name}'"
+                        r"Posterior on $\beta$" + f"\nfor {predictor_title} \non dataset '{dataset_name}'"
                     )
                     plt.tight_layout()
                     plt.savefig(f"logs/{run_name}/Posterior.png")
@@ -282,7 +285,7 @@ def main(config: DictConfig):
                     color="black",
                 )
                 plt.title(
-                    f"Signal detection with {predictor_name} \non dataset '{dataset_name}'"
+                    f"Signal detection with {predictor_title} prior \non dataset '{dataset_name}'"
                 )
                 plt.legend()
                 plt.savefig(f"logs/{run_name}/Signal detection.png")

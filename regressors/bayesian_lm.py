@@ -17,7 +17,7 @@ class BaseBayesianLinearPM(BaseBayesianRegressor):
         self.classification = config.get("classification", False)
         self.rng = np.random.default_rng(self.seed)
     
-    def plot_posterior_draws(self, var_name="beta", ax=None, title=r"$\beta$ Posterior Draws", x_label=r"$\beta$", relevant_features=[0, 1]):
+    def plot_posterior_draws(self, var_name="beta", ax=None, title=r"$\beta$ Posterior Draws", x_label=r"$\beta_i$", relevant_features=[0, 1]):
         """
         Plot the posterior draws of the coefficients.
         var_name: str, optional
@@ -43,7 +43,7 @@ class BaseBayesianLinearPM(BaseBayesianRegressor):
         
         ax.set_title(title)
         ax.set_xlabel(x_label)
-        ax.set_ylabel("Density")
+        ax.set_ylabel(r"$\beta$ value")
         ax.legend()
         
         return ax
