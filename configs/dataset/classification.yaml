@@ -10,10 +10,10 @@ config:
   # Take a number of features that will be relevant for defining the classes
   # Every feature is generated from a gaussian distribution with a different mean and standard deviation for each class
   # Specify the means and standard deviations for each class and every feature (this will also define the number of relevant features taken, the others will have beta set to 0)
-  first_class_means : [2, 30]
-  first_class_stddevs : [1, 1]
-  second_class_means : [30, 2]
-  second_class_stddevs : [1, 1]
+  first_class_means : [1, -1]
+  first_class_stddevs : [0.5, 0.5]
+  second_class_means : [-1, 1]
+  second_class_stddevs : [0.5, 0.5]
 
   # The standard deviation of the noise
   sigma : 1.0
