@@ -1,0 +1,6 @@
+name: Bayesian Linear Model Prior (Hyperlasso)
+config: 
+  use_numpyro: true
+  use_vi: false
+  # prior: hyperlasso
+  chains: 4

@@ -1,0 +1,6 @@
+name: Bayesian Linear Model Prior (Elastic Net)
+config: 
+  use_numpyro: true
+  use_vi: false
+  # prior: elasticnet
+  chains: 4
