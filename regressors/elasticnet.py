@@ -25,18 +25,18 @@ class BayesianLinearElasticNetPM(BaseBayesianLinearPM):
         self.p = x_data.shape[1]
         p = self.p
 
-        with elastic_net: # considering sigma = 1
+        with elastic_net: 
             sigma = pm.HalfNormal("sigma", 1)
             
             lambda_1 = pm.HalfCauchy('lambda_1', beta=1, shape=(p, 1))
             lambda_2 = pm.HalfCauchy('lambda_2', beta=1, shape=(p, 1))
-            # tau = pm.TruncatedGamma('tau', alpha=0.5, beta=(8 * lambda_2) / lambda_1**2, lower=0, upper=1, shape=(p, 1))
+            sigma_2 = 1
 
-            psi = pm.Deterministic('psi', (8 * lambda_2) / lambda_1**2)
+            psi = pm.Deterministic('psi', (8 * lambda_2 * sigma_2) / lambda_1**2)
             gamma_dist = pm.Gamma.dist(alpha=0.5, beta=psi)
             tau = pm.Truncated('tau', dist=gamma_dist, lower=1, upper=None, shape=(p, 1))
 
-            phi = pm.Deterministic('phi', (tau - 1) / (tau * lambda_2))
+            phi = pm.Deterministic('phi', (sigma_2 * (tau - 1)) / (tau * lambda_2))
             kappa = pm.Deterministic('kappa', 1/(1+phi**2))
 
             z = pm.Normal('z', mu=0, sigma=1, shape=(p, 1))
