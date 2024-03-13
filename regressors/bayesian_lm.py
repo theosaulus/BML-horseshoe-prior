@@ -167,12 +167,12 @@ class BayesianLinearPM(BaseBayesianLinearPM):
             self.prior = pm.sample_prior_predictive(samples=1000)
             if self.use_vi:
                 approx = pm.fit(10000, method="advi", random_seed=self.seed)
-                trace = approx.sample(1000, random_seed=self.rng)
+                trace = approx.sample(10000, random_seed=self.rng)
             else:
                 if self.use_numpyro:
-                    trace = pm.sample(1000, nuts_sampler="numpyro", target_accept=0.8, random_seed=self.rng)
+                    trace = pm.sample(10000, nuts_sampler="numpyro", target_accept=0.8, random_seed=self.rng)
                 else:
-                    trace = pm.sample(1000, target_accept=0.8, random_seed=self.rng, chains=self.chains)
+                    trace = pm.sample(10000, target_accept=0.8, random_seed=self.rng, chains=self.chains)
         
         self.trace = trace
 
