@@ -1,6 +1,6 @@
 # BML-horseshoe-prior
 
-A benchmark of several bayesian estimators on sparse linear regression problems, with a focus on the horseshoe prior.
+A benchmark of several bayesian estimators on sparse linear regression problems, with a focus on the horseshoe prior and the article Carvalho, Carlos M., Nicholas G. Polson, and James G. Scott. "Handling sparsity via the horseshoe." Artificial intelligence and statistics. PMLR, 2009.
 
 This is a student project by Timothé Boulet, Ali Ramlaoui and Théo Saulus, for the course "Bayesian Machine Learning" at the MVA master.
 
@@ -48,6 +48,12 @@ The algo tag should correspond to a configuration in ``configs/regressor/`` wher
 Currently, the following regressors are available:
  - `random` : Randomly predict the $\beta$ parameter vector.
  - `mle` : Maximum likelihood estimation, by doing a linear regression with the least squares method.
+ - `laplacian` : Laplacian prior, corresponding to a LASSO.
+ - `student` : Student-t prior.
+ - `horseshoe` : Horseshoe prior.
+ - `reg-horseshoe` : Regularized horseshoe prior.
+ - `spike_slab` : Spike and slab prior.
+ - `hyperlasso` : Hyperlasso prior.
 
 # Datasets
 
@@ -55,6 +61,11 @@ The dataset tag should correspond to a configuration in ``configs/dataset/`` whe
 
 Currently the following datasets are available:
  - `mean` : Sparse mean estimation, i.e. the task of estimating the mean of a sparse vector from noisy observations.
+ - `reg` : Sparse linear regression, i.e. the task of estimating the coefficients of a linear model from noisy observations.
+ - `classification` : Sparse classification, i.e. the task of estimating the coefficients of a logistic regression model from noisy observations.
+ - `exp1` : First experiment of the paper.
+ - `exp2` : Second experiment of the paper.
+ - `exp3` : Third experiment of the paper.
 
 
 # Visualisation and results
