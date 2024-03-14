@@ -68,7 +68,7 @@ def main(config: DictConfig):
         wandb_dataset_name = f"{dataset_name}_{config['regressor']['config']['prior']}"
     else:
         wandb_dataset_name = dataset_name
-    run_name = f"[{predictor_name}]_[{wandb_dataset_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(seed)}"
+    run_name = f"[dim{config['dataset']['config']['dim']}]_[{predictor_name}]_[{wandb_dataset_name}]_{datetime.datetime.now().strftime('%dth%mmo_%Hh%Mmin%Ss')}_seed{np.random.randint(seed)}"
     print(f"\nStarting run {run_name}")
     os.makedirs(f"logs/{run_name}", exist_ok=True)
     if do_wandb:
@@ -240,6 +240,7 @@ def main(config: DictConfig):
                 if RegressorClass in [
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior"],
                     regressor_name_to_RegressorClass["Bayesian Linear Model Prior (Spike and Slab)"],
+                    regressor_name_to_RegressorClass["Bayesian Linear Model Prior (Hyperlasso)"],
                 ]:
                     fig, axes = plt.subplots(1, 2, figsize=(10, 5))
                     regressor.plot_prior(var_name="kappa", ax=axes[0], title=r"Prior on $\kappa$", x_label=r"$\kappa$", xmin=0, xmax=regressor.prior.prior["kappa"].values.max())
