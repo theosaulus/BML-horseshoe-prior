@@ -41,7 +41,6 @@ We use Hydra as our config system. The config folder is `./configs/`. You can mo
 python run.py regressor=random dataset=mean --config-name=my_config_name
 ```
 
-Advice : create an alias for the command above this.
 # Regressors
 The algo tag should correspond to a configuration in ``configs/regressor/`` where you can specify the regressor and its hyperparameters. 
 
@@ -68,7 +67,19 @@ Currently the following datasets are available:
  - `exp3` : Third experiment of the paper.
 
 
-# Visualisation and results
+# Results and visualization
+
+### Report
+
+Our course report is accessible in the file `report.pdf`. Link : [report.pdf](report.pdf).
+
+Our conclusion :
+
+    We acknowledge the clear contribution of the paper, which is to apply the horseshoe prior to supervised learning tasks, while proposing explanations for its shrinkage power. 
+
+    We tried to address what appeared as weak points to us, namely using an actually fully Bayesian framework instead of plug-in during the experiments, providing more comprehensive comparisons with other priors, and doing an experiment on a task designed to challenge the prior. 
+    
+    More specifically, we notice that in many experiments, the Student-t prior approximately matches the performances of the horseshoe, which was not obvious when reading the article. Thus, although the horseshoe (or its regularized version) is a very efficient and flexible prior, it may not perform significantly different from Student-t, which should have been mentioned in the first place.
 
 ### WandB
 WandB is a very powerful tool for logging. It is flexible, logs everything online, can be used to compare experiments or group those by dataset or algorithm, etc. You can also be several people to work on the same project and share the results directly on line. It is also very easy to use, and can be used with a few lines of code.
